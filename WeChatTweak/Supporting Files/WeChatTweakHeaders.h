@@ -63,6 +63,7 @@ typedef NS_ENUM(unsigned int, MessageDataType) {
 
 - (instancetype)initWithMsgType:(long long)arg1;
 - (BOOL)isSendFromSelf;
+- (id)getChatNameForCurMsg;
 
 @end
 
@@ -111,6 +112,7 @@ typedef NS_ENUM(unsigned int, MessageDataType) {
 - (void)DelMsg:(id)arg1 msgList:(id)arg2 isDelAll:(BOOL)arg3 isManual:(BOOL)arg4;
 - (void)AddLocalMsg:(id)arg1 msgData:(id)arg2;
 - (void)notifyAddMsgOnMainThread:(id)arg1 msgData:(id)arg2;
+- (void)ModifyMsgDataInDBWithMessage:(id)arg1 chatName:(id)arg2;
 
 @end
 
@@ -149,5 +151,18 @@ typedef NS_ENUM(unsigned int, MessageDataType) {
 @interface MASPreferencesWindowController: NSWindowController
 
 - (id)initWithViewControllers:(NSArray *)arg1;
+
+@end
+
+@interface MMMessageTableItem : NSObject
+
+@property(retain, nonatomic) MessageData *message;
+
+@end
+
+@interface MMMessageCellView : NSTableCellView
+
+@property(retain, nonatomic) NSView *avatarImgView;
+@property(retain, nonatomic) MMMessageTableItem *messageTableItem;
 
 @end
