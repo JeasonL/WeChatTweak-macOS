@@ -18,6 +18,7 @@
 
 - (instancetype)init {
     if (self = [super init]) {
+        [MMKV setLogLevel:MMKVLogNone];
         _kv = [MMKV mmkvWithID:@"Recall.cache"];
     }
     return self;

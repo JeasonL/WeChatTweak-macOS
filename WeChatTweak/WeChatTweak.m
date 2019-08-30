@@ -99,14 +99,15 @@ static void __attribute__((constructor)) tweak(void) {
 
 - (void)tweak_populateWithMessage:(MMMessageTableItem *)tableItem {
     [self tweak_populateWithMessage:tableItem];
+    BOOL style = [RecallCacheManager containsRevokedMessageID:tableItem.message.mesSvrID] && tableItem.message.messageType != MessageDataTypePrompt;
     [((MMMessageCellView *)self).subviews enumerateObjectsUsingBlock:^(__kindof NSView * _Nonnull view, NSUInteger index, BOOL * _Nonnull stop) {
         if (view.tag != 9527) {
             return ;
         }
         *stop = YES;
-        view.hidden = ![RecallCacheManager containsRevokedMessageID:tableItem.message.mesSvrID];
+        view.hidden = !style;
     }];
-    ((MMMessageCellView *)self).layer.backgroundColor = [RecallCacheManager containsRevokedMessageID:tableItem.message.mesSvrID] ? [NSColor.yellowColor colorWithAlphaComponent:0.3].CGColor : ((MMMessageCellView *)self).layer.backgroundColor;
+    ((MMMessageCellView *)self).layer.backgroundColor = style ? [NSColor.yellowColor colorWithAlphaComponent:0.3].CGColor : ((MMMessageCellView *)self).layer.backgroundColor;
 }
 
 - (void)tweak_layout {
@@ -161,9 +162,27 @@ static void __attribute__((constructor)) tweak(void) {
         userNotification.informativeText = [NSString stringWithFormat:@"%@: %@", groupName, replaceMessage];
     }
     
-    // Invoke message reloading
-    [((MessageService *)self) ModifyMsgDataInDBWithMessage:messageData chatName:messageData.getChatNameForCurMsg];
-    
+    if ([messageData isSendFromSelf]) {
+        MessageData *promptMessageData = ({
+            MessageData *data = [[objc_getClass("MessageData") alloc] initWithMsgType:MessageDataTypePrompt];
+            data.msgStatus = 4;
+            data.toUsrName = messageData.toUsrName;
+            data.fromUsrName = messageData.fromUsrName;
+            data.mesSvrID = messageData.mesSvrID;
+            data.mesLocalID = messageData.mesLocalID;
+            data.msgCreateTime = messageData.msgCreateTime;
+            data.msgContent = replaceMessage;
+            data;
+        });
+        // Delete message if it is revoke from myself
+        [((MessageService *)self) DelMsg:session msgList:@[messageData] isDelAll:NO isManual:YES];
+        [((MessageService *)self) AddLocalMsg:session msgData:promptMessageData];
+    } else {
+        // Invoke message reloading
+        [((MessageService *)self) notifyDelMsgOnMainThread:messageData.getChatNameForCurMsg msgData:messageData];
+        [((MessageService *)self) notifyAddRevokePromptMsgOnMainThread:messageData.getChatNameForCurMsg msgData:messageData];
+    }
+
     // Dispatch notification
     dispatch_async(dispatch_get_main_queue(), ^{
         // Deliver notification

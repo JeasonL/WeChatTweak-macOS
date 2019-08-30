@@ -18,6 +18,7 @@ typedef NS_ENUM(unsigned int, MessageDataType) {
     MessageDataTypeVideo    = 43,
     MessageDataTypeSticker  = 47,
     MessageDataTypeLink     = 49,
+    MessageDataTypePrompt   = 10000
 };
 
 @interface NSString (MD5)
@@ -111,8 +112,8 @@ typedef NS_ENUM(unsigned int, MessageDataType) {
 - (id)GetMsgData:(id)arg1 svrId:(unsigned long long)arg2;
 - (void)DelMsg:(id)arg1 msgList:(id)arg2 isDelAll:(BOOL)arg3 isManual:(BOOL)arg4;
 - (void)AddLocalMsg:(id)arg1 msgData:(id)arg2;
-- (void)notifyAddMsgOnMainThread:(id)arg1 msgData:(id)arg2;
-- (void)ModifyMsgDataInDBWithMessage:(id)arg1 chatName:(id)arg2;
+- (void)notifyDelMsgOnMainThread:(id)arg1 msgData:(id)arg2;
+- (void)notifyAddRevokePromptMsgOnMainThread:(id)arg1 msgData:(id)arg2;
 
 @end
 
