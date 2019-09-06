@@ -113,6 +113,9 @@ typedef NS_ENUM(unsigned int, MessageDataType) {
 - (void)AddLocalMsg:(id)arg1 msgData:(id)arg2;
 - (void)notifyAddMsgOnMainThread:(id)arg1 msgData:(id)arg2;
 
+- (id)SendGifFileMsgFromUsr:(id)arg1 toUser:(id)arg2 gifFileName:(id)arg3 gifFilePath:(id)arg4;
+- (id)SendImgMessage:(id)arg1 toUsrName:(id)arg2 thumbImgData:(id)arg3 midImgData:(id)arg4 imgData:(id)arg5 imgInfo:(id)arg6;
+
 @end
 
 @interface AccountService: NSObject
@@ -165,3 +168,24 @@ typedef NS_ENUM(unsigned int, MessageDataType) {
 @property(retain, nonatomic) MMMessageTableItem *messageTableItem;
 
 @end
+
+@interface SendImageInfo : NSObject
+
+@property(retain, nonatomic) NSURL *m_nuImageSourceURL;
+
+@end
+
+@interface MessageThumbData : NSObject
+
+@property(nonatomic) unsigned int thumbHeight;
+@property(nonatomic) unsigned int thumbWidth;
+@property(retain, nonatomic) NSData *data;
+
+@end
+
+@interface NSImage (Resize)
+
+- (id)resizeToIdealSize:(struct CGSize)arg1;
+
+@end
+
