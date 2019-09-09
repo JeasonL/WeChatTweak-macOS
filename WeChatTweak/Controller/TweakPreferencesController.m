@@ -15,6 +15,7 @@
 @property (weak) IBOutlet NSPopUpButton *autoAuthButton;
 @property (weak) IBOutlet NSPopUpButton *notificationTypeButton;
 @property (weak) IBOutlet NSPopUpButton *compressedJSONEnabledButton;
+@property (weak) IBOutlet NSPopUpButton *convertImageButton;
 
 @end
 
@@ -34,9 +35,11 @@
     NSUserDefaults *userDefaults = [NSUserDefaults standardUserDefaults];
     BOOL enabledAutoAuth = [userDefaults boolForKey:WeChatTweakPreferenceAutoAuthKey];
     RevokeNotificationType notificationType = [userDefaults integerForKey:WeChatTweakPreferenceRevokeNotificationTypeKey];
+    BOOL enabledConvertImage = [userDefaults boolForKey:WeChatTweakConvertTheImageToStickerKey];
     [self.autoAuthButton selectItemAtIndex:enabledAutoAuth ? 1 : 0];
     [self.notificationTypeButton selectItemAtIndex:notificationType];
     [self.compressedJSONEnabledButton selectItemAtIndex:configManager.compressedJSONEnabled ? 0 : 1];
+    [self.convertImageButton selectItemAtIndex:enabledConvertImage ? 1 : 0];
 }
 
 #pragma mark - Event method
@@ -55,6 +58,12 @@
 - (IBAction)switchCompressedJSONEnabledAction:(NSPopUpButton *)sender {
     BOOL enabled = sender.indexOfSelectedItem == 0;
     WTConfigManager.sharedInstance.compressedJSONEnabled = enabled;
+}
+
+- (IBAction)switchConvertImageAction:(NSPopUpButton *)sender {
+    BOOL enabled = sender.indexOfSelectedItem == 1;
+    [[NSUserDefaults standardUserDefaults] setBool:enabled forKey:WeChatTweakConvertTheImageToStickerKey];
+    [[NSUserDefaults standardUserDefaults] synchronize];
 }
 
 #pragma mark - MASPreferencesViewController
