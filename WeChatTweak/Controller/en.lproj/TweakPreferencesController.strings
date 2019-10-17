@@ -31,3 +31,12 @@
 
 /* Class = "NSTextFieldCell"; title = "Alfred JSON compressing:"; ObjectID = "jHw-2a-B2t"; */
 "jHw-2a-B2t.title" = "Alfred JSON compressing:";
+
+/* Class = "NSTextFieldCell"; title = "Convert the drag image to a sticker:"; ObjectID = "ze7-fB-cCH"; */
+"ze7-fB-cCH.title" = "Convert the drag image to a sticker:";
+
+/* Class = "NSMenuItem"; title = "Enabled"; ObjectID = "mlO-Ko-T3J"; */
+"mlO-Ko-T3J.title" = "Enabled";
+
+/* Class = "NSMenuItem"; title = "Disabled"; ObjectID = "QWL-a8-MYf"; */
+"QWL-a8-MYf.title" = "Disabled";

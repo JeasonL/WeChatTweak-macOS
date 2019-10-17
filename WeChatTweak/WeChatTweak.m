@@ -69,7 +69,8 @@ static void __attribute__((constructor)) tweak(void) {
     [objc_getClass("MMMessageCellView") jr_swizzleMethod:NSSelectorFromString(@"initWithFrame:") withMethod:@selector(tweak_initWithFrame:) error:nil];
     [objc_getClass("MMMessageCellView") jr_swizzleMethod:NSSelectorFromString(@"populateWithMessage:") withMethod:@selector(tweak_populateWithMessage:) error:nil];
     [objc_getClass("MMMessageCellView") jr_swizzleMethod:NSSelectorFromString(@"layout") withMethod:@selector(tweak_layout) error:nil];
-    
+    [objc_getClass("MessageService") jr_swizzleMethod:NSSelectorFromString(@"SendImgMessage:toUsrName:thumbImgData:midImgData:imgData:imgInfo:") withMethod:@selector(tweak_SendImgMessage:toUsrName:thumbImgData:midImgData:imgData:imgInfo:) error:nil];
+
     objc_property_attribute_t type = { "T", "@\"NSString\"" }; // NSString
     objc_property_attribute_t atom = { "N", "" }; // nonatomic
     objc_property_attribute_t ownership = { "&", "" }; // C = copy & = strong
@@ -237,6 +238,59 @@ static void __attribute__((constructor)) tweak(void) {
         return [content tweak_subStringFrom:@"<url><![CDATA[" to:@"]]></url>"];
     } else {
         return [content tweak_subStringFrom:@"<url>" to:@"</url>"];
+    }
+}
+
+
+#pragma mark - Send image file to sticker message
+
+- (id)tweak_SendImgMessage:(id)arg1 toUsrName:(id)arg2 thumbImgData:(id)arg3 midImgData:(id)arg4 imgData:(id)arg5 imgInfo:(SendImageInfo *)arg6 {
+    BOOL enabledConvertImage = [[NSUserDefaults standardUserDefaults] boolForKey:WeChatTweakConvertTheImageToStickerKey];
+    if (!enabledConvertImage) {
+        return [self tweak_SendImgMessage:arg1 toUsrName:arg2 thumbImgData:arg3 midImgData:arg4 imgData:arg5 imgInfo:arg6];
+    } else {
+        NSString *imagePath = arg6.m_nuImageSourceURL.path;
+        if (!imagePath.length) {
+            return [self tweak_SendImgMessage:arg1 toUsrName:arg2 thumbImgData:arg3 midImgData:arg4 imgData:arg5 imgInfo:arg6];
+        } else {
+            NSString *imageFileName = [[imagePath componentsSeparatedByString:@"/"].lastObject componentsSeparatedByString:@"."].firstObject;
+            NSString *gifDirectory = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES).firstObject stringByAppendingPathComponent:@"GifSticker"];
+            NSFileManager *fileManager = [NSFileManager defaultManager];
+            if (![fileManager fileExistsAtPath:gifDirectory]) {
+                [fileManager createDirectoryAtPath:gifDirectory withIntermediateDirectories:YES attributes:nil error:nil];
+            }
+            NSString *gifFileName = [NSString stringWithFormat:@"%@.gif", imageFileName];
+            NSString *gifPath = [gifDirectory stringByAppendingPathComponent:gifFileName];
+            
+            NSImage *image = [[NSImage alloc] initWithContentsOfFile:imagePath];
+            image = [image resizeToIdealSize:CGSizeMake(300.0, 300.0)];
+            NSData *imageData = [image TIFFRepresentation];
+            
+            NSDictionary *frameProperties = [NSDictionary dictionaryWithObject:({
+                NSMutableDictionary *dictionary = [NSMutableDictionary dictionary];
+                [dictionary setObject:@(0.1) forKey:(NSString *)kCGImagePropertyGIFDelayTime];
+                dictionary;
+            }) forKey:(NSString *)kCGImagePropertyGIFDictionary];
+            NSDictionary * gifProperty = [NSDictionary dictionaryWithObject:({
+                NSMutableDictionary *dictionary = [NSMutableDictionary dictionary];
+                [dictionary setObject:@(YES) forKey:(NSString*)kCGImagePropertyGIFHasGlobalColorMap];
+                [dictionary setObject:(NSString *)kCGImagePropertyColorModelRGB forKey:(NSString *)kCGImagePropertyColorModel];
+                [dictionary setObject:@(8) forKey:(NSString*)kCGImagePropertyDepth];
+                [dictionary setObject:@(0) forKey:(NSString *)kCGImagePropertyGIFLoopCount];
+                dictionary;
+            }) forKey:(NSString *)kCGImagePropertyGIFDictionary];
+            
+            CFURLRef url = CFURLCreateWithFileSystemPath(kCFAllocatorDefault, (CFStringRef)gifPath, kCFURLPOSIXPathStyle, false);
+            CGImageDestinationRef destination = CGImageDestinationCreateWithURL(url, kUTTypeGIF, 1, NULL);
+            CGImageSourceRef imageSource = CGImageSourceCreateWithData((CFDataRef)imageData,  NULL);
+            CGImageRef imageRef = CGImageSourceCreateImageAtIndex(imageSource, 0, NULL);
+            CGImageDestinationAddImage(destination, imageRef, (__bridge CFDictionaryRef)frameProperties);
+            CGImageDestinationSetProperties(destination, (__bridge CFDictionaryRef)gifProperty);
+            CGImageDestinationFinalize(destination);
+            CFRelease(destination);
+            
+            return [((MessageService *)self) SendGifFileMsgFromUsr:arg1 toUser:arg2 gifFileName:gifFileName gifFilePath:gifPath];
+        }
     }
 }
 
